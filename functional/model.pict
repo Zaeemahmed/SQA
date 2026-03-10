@@ -1,0 +1,32 @@
+# PICT model for functional testing of AntPathMatcher.match(pattern, path)
+# Categories include one environment element (matcher configuration)
+# and two input-oriented categories (pattern kind and path kind).
+
+MatcherConfig: DEFAULT, CASE_INSENSITIVE
+PatternKind: EXACT, QUESTION, STAR_SEGMENT, DOUBLESTAR, URI_REGEX, EMPTY, NULL_PATTERN
+PathKind: EXACT_PATH, SINGLE_CHAR_VARIANT, CHILD_PATH, DEEP_PATH, DIFFERENT_PATH, EMPTY_PATH, NULL_PATH, CASE_VARIANT, URI_VALID, URI_INVALID
+
+# Singular / error cases: generate only one focused test for them.
+IF [PatternKind] = NULL_PATTERN THEN [MatcherConfig] = DEFAULT;
+IF [PatternKind] = NULL_PATTERN THEN [PathKind] = EXACT_PATH;
+
+IF [PathKind] = NULL_PATH THEN [MatcherConfig] = DEFAULT;
+IF [PathKind] = NULL_PATH THEN [PatternKind] = EXACT;
+
+# Empty pattern is only interesting with an empty path or a normal exact path.
+IF [PatternKind] = EMPTY THEN [PathKind] IN {EMPTY_PATH, EXACT_PATH};
+
+# URI-template patterns only make sense with URI-oriented paths.
+IF [PatternKind] = URI_REGEX THEN [PathKind] IN {URI_VALID, URI_INVALID};
+
+# '?' is interesting with same-length paths or obvious mismatches.
+IF [PatternKind] = QUESTION THEN [PathKind] IN {EXACT_PATH, SINGLE_CHAR_VARIANT, DIFFERENT_PATH};
+
+# '*' stays inside one segment, so child/deep paths are the key cases.
+IF [PatternKind] = STAR_SEGMENT THEN [PathKind] IN {CHILD_PATH, DEEP_PATH, DIFFERENT_PATH};
+
+# '**' is interesting for child/deep paths and obvious mismatches.
+IF [PatternKind] = DOUBLESTAR THEN [PathKind] IN {CHILD_PATH, DEEP_PATH, DIFFERENT_PATH};
+
+# Case-variant paths are only relevant for exact patterns and case-insensitive matcher config.
+IF [PathKind] = CASE_VARIANT THEN [PatternKind] = EXACT;
