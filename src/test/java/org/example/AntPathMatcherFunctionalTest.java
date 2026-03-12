@@ -2,6 +2,9 @@ package org.example;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.util.AntPathMatcher;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -93,5 +96,13 @@ class AntPathMatcherFunctionalTest {
     void tc16_caseInsensitiveEnvironment_shouldMatchIgnoringCase() {
         matcher.setCaseSensitive(false);
         assertTrue(matcher.match("/TeSt", "/test"));
+    }
+
+    @Test
+    void tc17_extractUriTemplateVariables_shouldExtractFilename() {
+        Map<String, String> vars =
+                matcher.extractUriTemplateVariables("/com/{filename:\\w+}.jsp", "/com/test.jsp");
+
+        assertEquals("test", vars.get("filename"));
     }
 }
