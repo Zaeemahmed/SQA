@@ -1,0 +1,18 @@
+==103296== Memcheck, a memory error detector
+==103296== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==103296== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==103296== Command: ./bht 2
+==103296== 
+completion time for put phase = 23.615841
+0: 0 keys missing
+1: 0 keys missing
+completion time for get phase = 26.298570
+==103296== 
+==103296== HEAP SUMMARY:
+==103296==     in use at exit: 0 bytes in 0 blocks
+==103296==   total heap usage: 4 allocs, 4 frees, 4,656 bytes allocated
+==103296== 
+==103296== All heap blocks were freed -- no leaks are possible
+==103296== 
+==103296== For lists of detected and suppressed errors, rerun with: -s
+==103296== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
