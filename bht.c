@@ -21,7 +21,7 @@ int keys[NKEYS];
 int nthread = 1;
 volatile int done;
 
-pthread_mutex_t lock;
+pthread_mutex_t bucket_locks[NBUCKET];
 
 double now() {
   struct timeval tv;
@@ -33,7 +33,7 @@ static void print(void) {
   int b, i;
   for (b = 0; b < NBUCKET; b++) {
     printf("%d: ", b);
-    for (i = 0; i < NBUCKET; i++) {
+    for (i = 0; i < NENTRY; i++) {
       if (table[b][i].inuse)
         printf("(%d, %d)", table[b][i].key, table[b][i].value);
     }
@@ -44,29 +44,31 @@ static void print(void) {
 static void put(int key, int value) {
   int b = key % NBUCKET;
   int i;
+
+  assert(pthread_mutex_lock(&bucket_locks[b]) == 0);
   for (i = 0; i < NENTRY; i++) {
     if (!table[b][i].inuse) {
       table[b][i].key = key;
       table[b][i].value = value;
       table[b][i].inuse = 1;
+      assert(pthread_mutex_unlock(&bucket_locks[b]) == 0);
       return;
     }
   }
+  assert(pthread_mutex_unlock(&bucket_locks[b]) == 0);
   assert(0);
 }
 
 static int get(int key) {
-  assert(pthread_mutex_lock(&lock) == 0);
   int b = key % NBUCKET;
   int i;
   int v = -1;
   for (i = 0; i < NENTRY; i++) {
-    if (table[b][i].key == key && table[b][i].inuse) {
+    if (table[b][i].inuse && table[b][i].key == key) {
       v = table[b][i].value;
       break;
     }
   }
-  assert(pthread_mutex_unlock(&lock) == 0);
   return v;
 }
 
@@ -99,6 +101,7 @@ int main(int argc, char *argv[]) {
   pthread_t *tha;
   void *value;
   long i;
+  int b;
   double t1, t0;
 
   if (argc < 2) {
@@ -107,7 +110,9 @@ int main(int argc, char *argv[]) {
   }
   nthread = atoi(argv[1]);
 
-  assert(pthread_mutex_init(&lock, NULL) == 0);
+  for (b = 0; b < NBUCKET; b++) {
+    assert(pthread_mutex_init(&bucket_locks[b], NULL) == 0);
+  }
 
   tha = malloc(sizeof(pthread_t) * nthread);
   assert(tha != NULL);
@@ -142,5 +147,8 @@ int main(int argc, char *argv[]) {
   printf("completion time for get phase = %f\n", t1 - t0);
 
   free(tha);
+  for (b = 0; b < NBUCKET; b++) {
+    assert(pthread_mutex_destroy(&bucket_locks[b]) == 0);
+  }
   return 0;
 }
